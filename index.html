@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta name="viewport" content="width=428, maximum-scale=1">
+	<meta name="description"
+		content="A game where a ball moves and bounces from the walls. You have to set the correct position and angle of the ball in order to hit the given points by making a limited number number of bounces.">
+	<title>Bounce</title>
+
+	<link rel="icon"
+		href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAAL2SURBVFhH7ZffS1NhHMbfi4Lu80LBKZSbKV7YMEKwKy8UWQOrsVEKdpUXXXRXYH+AFASR5I1syxLmmjpjCoEYmRr4o0xBglAk0xXpNs/Odtx2zp543+mIc86Os9aE8IGHfXnf5z3vZ9v3feEQQgiO2IqBfDtVFBQUoLGxMS+uqqpSAphMJuRLfX19SgBKli/19PQcAxwD/AcAq/wGbi88gHWhA72rPvm0pnICcGfuIQwzVujfXkX1qBXBOCePZFROAFqmOlA23oyzPjPODJvgF7bkkYzKCYBjZRiGaQsM7y2wTt5FTIrLIxmVEwAxKeLNj1mMbc/AH/0pn9ZUTgD+RqoADQ0N8tw/kypAU1MTJACjG3GM+2PyNX+mSDRlmVQBbDYb5qIAGQHIYAyPl3n5uqyVmJ1HvNkG3ljLTOv47Hx6XhXAYrFgWQBIPwfykgfxCH8EIX5dR6TiPFBSDl6nZ6a1UGGEuLDIMqoA+034YiWKE24OxLUDMrCLp58jsi00JEngbtxkG24Vl2F7z7SmYzuXr7GY3W7PDEB1/2MYxAcGcao/iMVAlj2RSCBYfRFRnT69+b4jOj0CxloWczqd2gBiEmid4kC8EoibR6GXw1Igu4smeKFOFYCOBWvqWOZAgH21TodBvCLIgIBC744mxKegiLWwBO5SPRIlBsVfQMdCdfUs63A4sgOgamG/hMiakkIsyiC4uIQrE7RxIyjyCVh77gGKStk3DhSXMdM6WVKOXc8QW6PZhGq6Psmxo0k8UQbhj9IbA3i9GcO5kb25gV2Q3u+gp15y9iJWaURMZ0i50gjB/iz9vEMDhBNJlA5upTYZjME2EULnEp86rtRDcZwe4uBeE9JrpPVvwNwHZlb/pkMDUH3hEigdDqUgXCEQdzj16RXR/I7HKpeQL8koVQCz2SzPKRQEUDO9d1u+AorGgK5NeepguVwuJQB9XaJkWqZvNPcedYO0d+Fk+xPc6uyGx+NhXS3ParmtrU0JcIRWDOTVvwCpw6njKIFUnwAAAABJRU5ErkJggg==">
+
+</head>
+
+<body style="text-align: center;">
+	Level: <span id="levelText">1</span> Bounces left: <span id="bouncesLeftText">0</span><br>
+	<hr><br>
+	<canvas
+		style="background: white; width: 100%; cursor: pointer; max-width: 800px; box-sizing: border-box; border: 10px solid black;"
+		id="mainCanvas" width="1000" height="500"></canvas>
+	<br>
+	<hr>
+	Angle: <span id="angleNumber">0</span>&deg;<br>
+	<label style="display: flex; gap: 10px;">
+		0&deg;
+		<input id="angleInput" step="1" value="0" min="0" max="359" type="range" style="width: 100%;">
+		359&deg;
+	</label>
+	Position:
+	<br>
+	<br>
+	<div>
+		<label>X: <input type="number" id="xCoordInput" min="10" max="990" step="1"></label>
+		<label>Y: <input type="number" id="yCoordInput" min="10" max="490" step="1"></label>
+	</div>
+	<br>
+	<button id="toggleBtn">Start</button>
+	<p>
+		You have to set the correct position and angle of the <span style="color: red">red</span> ball <span style="vertical-align: middle; display: inline-block; width: 20px; height: 20px; border-radius: 10px; background-color: red;"></span> in order
+		to hit the given <span style="color: green">green</span>
+		points <span style="vertical-align: middle; display: inline-block; width: 10px; height: 10px; border-radius: 5px; background-color: green;"></span> by making a limited number of bounces.
+	</p>
+	<script type="module">
+		const mainCanvas = document.getElementById('mainCanvas');
+		const context = mainCanvas.getContext("2d");
+		const angleNumber = document.getElementById('angleNumber');
+		const angleInput = document.getElementById('angleInput');
+		const xCoordInput = document.getElementById('xCoordInput');
+		const yCoordInput = document.getElementById('yCoordInput');
+
+		const toggleBtn = document.getElementById('toggleBtn');
+
+		const levelText = document.getElementById('levelText');
+		const bouncesLeftText = document.getElementById('bouncesLeftText');
+
+		const minX = +xCoordInput.min;
+		const minY = +yCoordInput.min;
+
+		const maxX = +xCoordInput.max;
+		const maxY = +yCoordInput.max;
+
+		const pointCoords = [];
+
+		let x = 0, y = 0, angle = 0, level = 1, bouncesLeft = 0;
+
+		onCoordInputChanges();
+
+		function onCoordInputChanges() {
+			x = xCoordInput.valueAsNumber;
+			y = yCoordInput.valueAsNumber;
+
+			if (isNaN(x) || isNaN(y) || !Number.isInteger(x) || !Number.isInteger(y) || x < minX || x > maxX || y < minY || y > maxY) {
+				x = isNaN(x) ? minX : Math.floor(Math.min(maxX, Math.max(minX, x)));
+				y = isNaN(y) ? minY : Math.floor(Math.min(maxY, Math.max(minY, y)));
+
+				xCoordInput.valueAsNumber = x;
+				yCoordInput.valueAsNumber = y;
+			}
+
+			render();
+		}
+
+		angleInput.oninput = () => {
+			angleNumber.innerText = angleInput.value;
+			angle = angleInput.valueAsNumber;
+			render();
+		};
+
+		xCoordInput.oninput = yCoordInput.oninput = onCoordInputChanges;
+
+		function render(drawLine = true) {
+			context.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+
+			context.fillStyle = "red";
+			context.beginPath();
+			context.arc(x, y, 10, 0, 2 * Math.PI);
+			context.fill();
+
+			for (const pointCoord of pointCoords) {
+				context.fillStyle = "green";
+				context.beginPath();
+				context.arc(pointCoord.x, pointCoord.y, 5, 0, 2 * Math.PI);
+				context.fill();
+			}
+
+			if (drawLine) {
+				context.strokeStyle = "blue";
+				context.lineWidth = 3;
+				context.beginPath();
+				context.moveTo(x, y);
+				context.lineTo(x + 1500 * Math.cos(Math.PI * angle / 180), y + 1500 * Math.sin(Math.PI * angle / 180));
+				context.stroke();
+			}
+		}
+
+		let canvasClicked = false;
+
+		function updateCoordsFromCanvas(ev) {
+			const box = mainCanvas.getBoundingClientRect();
+			const scale = mainCanvas.width / (box.width - 20);
+
+			if (ev instanceof TouchEvent) {
+				x = ev.targetTouches[0].clientX - box.x - 10;
+				y = ev.targetTouches[0].clientY - box.y - 10;
+			} else if (ev instanceof MouseEvent) {
+				x = ev.clientX - box.x - 10;
+				y = ev.clientY - box.y - 10;
+			}
+
+			x = Math.floor(Math.min(maxX, Math.max(minX, x * scale)));
+			y = Math.floor(Math.min(maxY, Math.max(minY, y * scale)));
+
+			xCoordInput.valueAsNumber = x;
+			yCoordInput.valueAsNumber = y;
+
+			render();
+		}
+
+		window.addEventListener('mousemove', ev => {
+			if (ev.buttons !== 1 || !canvasClicked) {
+				canvasClicked = false;
+				return;
+			}
+
+			updateCoordsFromCanvas(ev);
+		});
+
+		window.addEventListener('touchmove', ev => {
+			if (!canvasClicked) {
+				return;
+			}
+
+			updateCoordsFromCanvas(ev);
+		});
+
+		window.addEventListener('touchend', ev => {
+			canvasClicked = false;
+		});
+
+		window.addEventListener('touchcancel', ev => {
+			canvasClicked = false;
+		});
+
+		mainCanvas.onmousedown = mainCanvas.ontouchstart = ev => {
+			if (interval !== null) {
+				return;
+			}
+
+			canvasClicked = true;
+			updateCoordsFromCanvas(ev);
+		};
+
+		let interval = null;
+
+		function generate() {
+			bouncesLeft += 10;
+			const randomAngle = Math.floor(360 * Math.random());
+
+			let dx = Math.cos(randomAngle * Math.PI / 180);
+			let dy = Math.sin(randomAngle * Math.PI / 180);
+
+			let xCoord = Math.floor(Math.min(maxX, Math.max(minX, Math.random() * mainCanvas.width)));
+			let yCoord = Math.floor(Math.min(maxY, Math.max(minY, Math.random() * mainCanvas.height)));
+
+			let generationThreshold = 1;
+			pointCoords.length = [];
+
+
+			while (pointCoords.length <= level) {
+				if (generationThreshold >= 1) {
+					generationThreshold = 0;
+
+					pointCoords.push({
+						x: Math.floor(xCoord),
+						y: Math.floor(yCoord),
+					});
+				}
+
+				xCoord += dx;
+				yCoord += dy;
+
+				if (xCoord > maxX || xCoord < minX) {
+					dx = -dx;
+					xCoord += dx;
+					++bouncesLeft;
+					generationThreshold += 0.4;
+				}
+
+				if (yCoord > maxY || yCoord < minY) {
+					dy = -dy;
+					yCoord += dy;
+					++bouncesLeft;
+					generationThreshold += 0.4;
+				}
+
+				generationThreshold += 0.005 * Math.random();
+			}
+
+			bouncesLeftText.innerText = bouncesLeft;
+		}
+
+		function start() {
+			toggleBtn.onclick = stop;
+			toggleBtn.innerText = 'Give up';
+			document.querySelectorAll('input').forEach(el => el.disabled = true);
+			let dx = Math.cos(angle * Math.PI / 180);
+			let dy = Math.sin(angle * Math.PI / 180);
+			let c = 0;
+
+			interval = setInterval(() => {
+				for (let i = 0; i < 20; ++i) {
+					if (bouncesLeft <= 0 || !pointCoords.length) {
+						stop();
+						return;
+					}
+
+					x += dx;
+					y += dy;
+
+					if (x > maxX || x < minX) {
+						dx = -dx;
+						x += dx;
+						angle = (540 - angle) % 360;
+						bouncesLeftText.innerText = Math.max(--bouncesLeft, 0);
+					}
+
+					if (y > maxY || y < minY) {
+						dy = -dy;
+						y += dy;
+						angle = 360 - angle;
+						bouncesLeftText.innerText = Math.max(--bouncesLeft, 0);
+					}
+
+					while (true) {
+						const index = pointCoords.findIndex(c => (x - c.x) ** 2 + (y - c.y) ** 2 < 225);
+
+						if (index !== -1) {
+							pointCoords.splice(index, 1);
+							render();
+						} else {
+							break;
+						}
+					}
+				}
+
+				render(false);
+			}, 20);
+		}
+
+		function stop() {
+			if (pointCoords.length) {
+				setTimeout(() => alert('You lost'), 10);
+				level = 1;
+			} else {
+				setTimeout(() => alert('You won'), 10);
+				++level;
+			}
+
+			levelText.innerText = level;
+
+			x = Math.floor(Math.min(maxX, Math.max(minX, x)));
+			y = Math.floor(Math.min(maxY, Math.max(minY, y)));
+			xCoordInput.valueAsNumber = x;
+			yCoordInput.valueAsNumber = y;
+			angleInput.valueAsNumber = angle;
+			angleNumber.innerText = angleInput.value;
+			toggleBtn.onclick = start;
+			toggleBtn.innerText = 'Start';
+			document.querySelectorAll('input').forEach(el => el.disabled = false);
+			clearInterval(interval);
+			interval = null;
+			generate();
+			render();
+		}
+
+		toggleBtn.onclick = start;
+
+		generate();
+		render();
+	</script>
+</body>
+
+</html>
