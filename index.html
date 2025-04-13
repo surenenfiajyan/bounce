@@ -119,7 +119,7 @@
 			const box = mainCanvas.getBoundingClientRect();
 			const scale = mainCanvas.width / (box.width - 20);
 
-			if (ev instanceof TouchEvent) {
+			if (window.TouchEvent && ev instanceof TouchEvent) {
 				x = ev.targetTouches[0].clientX - box.x - 10;
 				y = ev.targetTouches[0].clientY - box.y - 10;
 			} else if (ev instanceof MouseEvent) {
