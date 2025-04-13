@@ -122,6 +122,7 @@
 			if (window.TouchEvent && ev instanceof TouchEvent) {
 				x = ev.targetTouches[0].clientX - box.x - 10;
 				y = ev.targetTouches[0].clientY - box.y - 10;
+				ev.preventDefault();
 			} else if (ev instanceof MouseEvent) {
 				x = ev.clientX - box.x - 10;
 				y = ev.clientY - box.y - 10;
