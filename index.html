@@ -56,7 +56,6 @@
 
 		const levelText = document.getElementById('levelText');
 		const bouncesLeftText = document.getElementById('bouncesLeftText');
-		const bonusBounces = Math.floor(Math.min(10, 10 * window.innerWidth / 1000));
 
 		if (window.innerWidth < 1000) {
 			mainCanvas.width = Math.floor(window.innerWidth);
@@ -187,7 +186,10 @@
 		let interval = null;
 
 		function generate() {
-			bouncesLeft += bonusBounces;
+			if (bouncesLeft === 0) {
+				++bouncesLeft;
+			}
+
 			const randomAngle = Math.floor(360 * Math.random());
 
 			let dx = Math.cos(randomAngle * Math.PI / 180);
@@ -199,6 +201,7 @@
 			let generationThreshold = 1;
 			pointCoords.length = [];
 
+			const bounceIncrement = 1 + 20 / (9 + level);
 
 			while (pointCoords.length <= level) {
 				if (generationThreshold >= 1) {
@@ -216,20 +219,21 @@
 				if (xCoord > maxX || xCoord < minX) {
 					dx = -dx;
 					xCoord += dx;
-					++bouncesLeft;
+					bouncesLeft += bounceIncrement;
 					generationThreshold += 0.4;
 				}
 
 				if (yCoord > maxY || yCoord < minY) {
 					dy = -dy;
 					yCoord += dy;
-					++bouncesLeft;
+					bouncesLeft += bounceIncrement;
 					generationThreshold += 0.4;
 				}
 
 				generationThreshold += 0.005 * Math.random();
 			}
 
+			bouncesLeft = Math.round(bouncesLeft);
 			bouncesLeftText.innerText = bouncesLeft;
 		}
 
